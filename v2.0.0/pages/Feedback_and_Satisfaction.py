@@ -52,6 +52,30 @@ def parse_tags(tags_val):
     return []
 
 
+def safe_hist_bins(series: pd.Series, default: int = 10, max_bins: int = 30) -> int:
+    """Return a valid integer bin count for Plotly histograms."""
+    if series is None or len(series) == 0:
+        return default
+
+    numeric = pd.to_numeric(series, errors='coerce').dropna()
+    if numeric.empty:
+        return default
+
+    max_value = numeric.max()
+    if pd.isna(max_value):
+        return default
+
+    try:
+        bins = int(max_value)
+    except (TypeError, ValueError):
+        return default
+
+    if bins < 1:
+        return 1
+
+    return min(max_bins, bins)
+
+
 def main():
     st.title("📝 Feedback & Satisfaction")
     st.markdown("*Analyze user feedback, satisfaction scores, and engagement patterns*")
@@ -295,21 +319,24 @@ def main():
                 st.markdown("#### 💬 Questions per Session")
                 session_counts = session_df.groupby('session_id').size().reset_index(name='question_count')
 
-                fig = go.Figure()
-                fig.add_trace(go.Histogram(
-                    x=session_counts['question_count'],
-                    nbinsx=min(30, session_counts['question_count'].max()),
-                    marker=dict(color=BYU_COLORS['primary']),
-                    hovertemplate='Questions: %{x}<br>Sessions: %{y}<extra></extra>'
-                ))
-                fig.update_layout(
-                    title="Distribution of Questions per Session",
-                    xaxis_title="Number of Questions",
-                    yaxis_title="Number of Sessions",
-                    height=350,
-                    showlegend=False
-                )
-                st.plotly_chart(fig, use_container_width=True, key="questions_per_session")
+                if session_counts.empty:
+                    st.info("No session counts available for histogram.")
+                else:
+                    fig = go.Figure()
+                    fig.add_trace(go.Histogram(
+                        x=session_counts['question_count'],
+                        nbinsx=safe_hist_bins(session_counts['question_count']),
+                        marker=dict(color=BYU_COLORS['primary']),
+                        hovertemplate='Questions: %{x}<br>Sessions: %{y}<extra></extra>'
+                    ))
+                    fig.update_layout(
+                        title="Distribution of Questions per Session",
+                        xaxis_title="Number of Questions",
+                        yaxis_title="Number of Sessions",
+                        height=350,
+                        showlegend=False
+                    )
+                    st.plotly_chart(fig, use_container_width=True, key="questions_per_session")
 
                 # Session size stats
                 col1, col2, col3, col4 = st.columns(4)
@@ -336,21 +363,24 @@ def main():
                 # Questions per user
                 user_counts = user_df.groupby('user_id').size().reset_index(name='question_count')
 
-                fig = go.Figure()
-                fig.add_trace(go.Histogram(
-                    x=user_counts['question_count'],
-                    nbinsx=min(30, user_counts['question_count'].max()),
-                    marker=dict(color=BYU_COLORS['secondary']),
-                    hovertemplate='Questions: %{x}<br>Users: %{y}<extra></extra>'
-                ))
-                fig.update_layout(
-                    title="Distribution of Questions per User",
-                    xaxis_title="Number of Questions",
-                    yaxis_title="Number of Users",
-                    height=350,
-                    showlegend=False
-                )
-                st.plotly_chart(fig, use_container_width=True, key="questions_per_user")
+                if user_counts.empty:
+                    st.info("No user counts available for histogram.")
+                else:
+                    fig = go.Figure()
+                    fig.add_trace(go.Histogram(
+                        x=user_counts['question_count'],
+                        nbinsx=safe_hist_bins(user_counts['question_count']),
+                        marker=dict(color=BYU_COLORS['secondary']),
+                        hovertemplate='Questions: %{x}<br>Users: %{y}<extra></extra>'
+                    ))
+                    fig.update_layout(
+                        title="Distribution of Questions per User",
+                        xaxis_title="Number of Questions",
+                        yaxis_title="Number of Users",
+                        height=350,
+                        showlegend=False
+                    )
+                    st.plotly_chart(fig, use_container_width=True, key="questions_per_user")
 
                 # User activity stats
                 col1, col2, col3, col4 = st.columns(4)
