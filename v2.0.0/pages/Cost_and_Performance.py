@@ -40,7 +40,6 @@ def main():
     # Check data availability
     has_cost = 'total_cost' in df.columns and df['total_cost'].notna().any()
     has_latency = 'latency' in df.columns and df['latency'].notna().any()
-    has_release = 'release' in df.columns and df['release'].notna().any()
 
     if not has_cost and not has_latency:
         st.info("""
@@ -99,7 +98,7 @@ def main():
             )
 
     # Second row of KPIs
-    col5, col6, col7, col8 = st.columns(4)
+    col5, col6, col7 = st.columns(3)
 
     with col5:
         if has_cost:
@@ -129,15 +128,6 @@ def main():
                 label="🔴 P99 Latency",
                 value=f"{p99:.2f}s" if p99 > 0 else "N/A",
                 help="99th percentile response time"
-            )
-
-    with col8:
-        if has_release:
-            unique_releases = df['release'].nunique()
-            st.metric(
-                label="🏷️ Releases",
-                value=unique_releases,
-                help="Number of unique release versions"
             )
 
     st.markdown("---")
@@ -432,44 +422,6 @@ def main():
             st.plotly_chart(fig, use_container_width=True, key="cost_vs_volume_scatter")
 
         st.markdown("---")
-
-        # Release breakdown
-        if has_release:
-            st.markdown("#### 🏷️ Performance by Release")
-            release_stats = df[df['release'].notna()].groupby('release').agg(
-                count=('release', 'count'),
-                avg_latency=('latency', 'mean') if has_latency else ('release', 'count'),
-                total_cost=('total_cost', 'sum') if has_cost else ('release', 'count')
-            ).reset_index()
-
-            # Build a cleaner table
-            release_display = []
-            for _, row in release_stats.iterrows():
-                entry = {
-                    'Release': row['release'][:12] + '...' if len(str(row['release'])) > 12 else row['release'],
-                    'Full Hash': row['release'],
-                    'Questions': int(row['count']),
-                }
-                if has_latency:
-                    entry['Avg Latency (s)'] = f"{row['avg_latency']:.3f}" if pd.notna(row['avg_latency']) else 'N/A'
-                if has_cost:
-                    entry['Total Cost ($)'] = f"{row['total_cost']:.6f}" if pd.notna(row['total_cost']) else 'N/A'
-                release_display.append(entry)
-
-            st.dataframe(pd.DataFrame(release_display), use_container_width=True, hide_index=True)
-
-        st.markdown("---")
-
-        # Model info note
-        st.markdown("#### 🤖 Model Information")
-        st.info("""
-        **Embedding Model:** `text-embedding-3-small` (1536 dimensions)
-        **Topic Naming Model:** `gpt-5-nano`
-
-        Cost data comes from Langfuse's `total_cost` field which tracks token usage
-        across embedding and completion API calls. Latency measures the end-to-end
-        response time for each chatbot interaction.
-        """)
 
         # Efficiency insights
         if has_cost and has_latency:

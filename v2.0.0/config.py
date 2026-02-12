@@ -87,11 +87,7 @@ ALL_AVAILABLE_COLUMNS = [
     "latency",
     "total_cost",
     "session_id",
-    "user_id",
-    "tags",
-    "scores",
-    "release",
-    "role"
+    "user_id"
 ]
 
 # Column display names (for better UX)
@@ -114,11 +110,7 @@ COLUMN_DISPLAY_NAMES = {
     "latency": "Latency (s)",
     "total_cost": "Cost ($)",
     "session_id": "Session ID",
-    "user_id": "User ID",
-    "tags": "Tags",
-    "scores": "Scores",
-    "release": "Release",
-    "role": "Role"
+    "user_id": "User ID"
 }
 
 # ============ Data Type Mappings ============

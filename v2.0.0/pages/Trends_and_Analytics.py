@@ -351,57 +351,87 @@ def main():
             st.markdown("Analyzing user feedback to improve response quality.")
             
             feedback_df = df[df['user_feedback'].notna()].copy()
+
+            # Normalize feedback labels from different source conventions
+            feedback_map = {
+                'good': 'helpful',
+                'helpful': 'helpful',
+                'thumbs_up': 'helpful',
+                'positive': 'helpful',
+                '1': 'helpful',
+                'true': 'helpful',
+                'yes': 'helpful',
+                'bad': 'unhelpful',
+                'unhelpful': 'unhelpful',
+                'thumbs_down': 'unhelpful',
+                'negative': 'unhelpful',
+                '-1': 'unhelpful',
+                'false': 'unhelpful',
+                'no': 'unhelpful'
+            }
+
+            feedback_df['feedback_norm'] = (
+                feedback_df['user_feedback']
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .map(feedback_map)
+            )
+            feedback_df = feedback_df[feedback_df['feedback_norm'].notna()]
+
+            if feedback_df.empty:
+                st.info("Feedback exists, but no recognized Good/Bad labels were found.")
+            else:
+                col1, col2 = st.columns(2)
             
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Overall Feedback Metrics:**")
-                
-                total_feedback = len(feedback_df)
-                helpful_count = len(feedback_df[feedback_df['user_feedback'] == 'helpful'])
-                unhelpful_count = len(feedback_df[feedback_df['user_feedback'] == 'unhelpful'])
-                
-                helpful_rate = (helpful_count / total_feedback * 100) if total_feedback > 0 else 0
-                unhelpful_rate = (unhelpful_count / total_feedback * 100) if total_feedback > 0 else 0
-                
-                st.metric("Total Feedback", f"{total_feedback:,}")
-                st.metric("Helpful Rate", f"{helpful_rate:.1f}%", delta=f"{helpful_count:,} responses")
-                st.metric("Unhelpful Rate", f"{unhelpful_rate:.1f}%", delta=f"{unhelpful_count:,} responses")
-            
-            with col2:
-                st.markdown("**Feedback by Classification:**")
-                
-                if 'classification' in feedback_df.columns:
-                    feedback_by_class = feedback_df.groupby(['classification', 'user_feedback']).size().unstack(fill_value=0)
+                with col1:
+                    st.markdown("**Overall Feedback Metrics:**")
                     
-                    if not feedback_by_class.empty:
-                        for classification in feedback_by_class.index:
-                            total = feedback_by_class.loc[classification].sum()
-                            if 'helpful' in feedback_by_class.columns:
-                                helpful = feedback_by_class.loc[classification, 'helpful']
-                                rate = (helpful / total * 100) if total > 0 else 0
-                                st.markdown(f"**{classification}**: {rate:.1f}% helpful ({total} responses)")
-            
-            with st.expander("💡 Quality Improvement Recommendations"):
-                if unhelpful_rate > 20:
-                    st.warning("""
-                    **⚠️ High Unhelpful Rate Detected**
+                    total_feedback = len(feedback_df)
+                    helpful_count = len(feedback_df[feedback_df['feedback_norm'] == 'helpful'])
+                    unhelpful_count = len(feedback_df[feedback_df['feedback_norm'] == 'unhelpful'])
                     
-                    With over 20% of responses marked as unhelpful, consider:
-                    - Reviewing and improving response templates
-                    - Training staff on common question patterns
-                    - Implementing response quality checks
-                    - Gathering more detailed feedback on what was unhelpful
-                    """)
-                else:
-                    st.success("""
-                    **✅ Good Response Quality**
+                    helpful_rate = (helpful_count / total_feedback * 100) if total_feedback > 0 else 0
+                    unhelpful_rate = (unhelpful_count / total_feedback * 100) if total_feedback > 0 else 0
                     
-                    Your helpful rate is strong! Continue to:
-                    - Monitor feedback trends for any changes
-                    - Share best practices from high-quality responses
-                    - Use successful responses as templates
-                    """)
+                    st.metric("Total Feedback", f"{total_feedback:,}")
+                    st.metric("Helpful Rate", f"{helpful_rate:.1f}%", delta=f"{helpful_count:,} responses")
+                    st.metric("Unhelpful Rate", f"{unhelpful_rate:.1f}%", delta=f"{unhelpful_count:,} responses")
+                
+                with col2:
+                    st.markdown("**Feedback by Classification:**")
+                    
+                    if 'classification' in feedback_df.columns:
+                        feedback_by_class = feedback_df.groupby(['classification', 'feedback_norm']).size().unstack(fill_value=0)
+                        
+                        if not feedback_by_class.empty:
+                            for classification in feedback_by_class.index:
+                                total = feedback_by_class.loc[classification].sum()
+                                if 'helpful' in feedback_by_class.columns:
+                                    helpful = feedback_by_class.loc[classification, 'helpful']
+                                    rate = (helpful / total * 100) if total > 0 else 0
+                                    st.markdown(f"**{classification}**: {rate:.1f}% helpful ({total} responses)")
+                
+                with st.expander("💡 Quality Improvement Recommendations"):
+                    if unhelpful_rate > 20:
+                        st.warning("""
+                        **⚠️ High Unhelpful Rate Detected**
+                        
+                        With over 20% of responses marked as unhelpful, consider:
+                        - Reviewing and improving response templates
+                        - Training staff on common question patterns
+                        - Implementing response quality checks
+                        - Gathering more detailed feedback on what was unhelpful
+                        """)
+                    else:
+                        st.success("""
+                        **✅ Good Response Quality**
+                        
+                        Your helpful rate is strong! Continue to:
+                        - Monitor feedback trends for any changes
+                        - Share best practices from high-quality responses
+                        - Use successful responses as templates
+                        """)
 
     
     # Footer

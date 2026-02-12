@@ -104,7 +104,7 @@ def main():
     - **📅 Weekly Insights**: Week-by-week topic analysis and trends
     - **🌍 Regional Insights**: Geographic patterns and localization opportunities
     - **💰 Cost & Performance**: Cost evaluation, latency analysis, and operational metrics
-    - **📝 Feedback & Satisfaction**: User feedback, scores, sessions, and engagement
+    - **📝 Feedback & Satisfaction**: User feedback, sessions, and engagement
     
     💡 **Tip:** All filters and sorting happen instantly without page refresh!
     """)

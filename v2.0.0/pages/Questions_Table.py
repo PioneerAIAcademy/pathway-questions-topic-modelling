@@ -275,6 +275,11 @@ def main():
     if not filtered_df.empty:
         # Create a display copy and remove newlines from output column for clean CSV downloads
         display_df = filtered_df.copy()
+
+        # Hide internal/technical columns from stakeholder-facing table
+        hidden_columns = ['tags', 'scores', 'release', 'role']
+        display_df = display_df.drop(columns=[c for c in hidden_columns if c in display_df.columns], errors='ignore')
+
         if 'output' in display_df.columns:
             display_df['output'] = display_df['output'].astype(str).str.replace('\n', ' ', regex=False).str.replace('\r', ' ', regex=False)
         
