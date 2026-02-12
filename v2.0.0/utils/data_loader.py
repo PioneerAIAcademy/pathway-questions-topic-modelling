@@ -92,6 +92,18 @@ def load_data_from_s3() -> Dict[str, pd.DataFrame]:
                     st.error(f"Error loading {file_type}: {str(e)}")
                 continue
             
+            # Load general_feedback parquet files
+            if file_type == "general_feedback":
+                try:
+                    obj = s3_client.get_object(Bucket=AWS_S3_BUCKET, Key=most_recent['key'])
+                    buffer = BytesIO(obj['Body'].read())
+                    df = pd.read_parquet(buffer)
+                    data[file_type] = df
+                except Exception as e:
+                    # General feedback may not exist yet - not an error
+                    pass
+                continue
+            
             try:
                 # Download and read parquet file
                 # Must read into BytesIO buffer because pandas needs seekable stream
@@ -260,7 +272,14 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
         'questions_in_new_topics': len(merged_df[merged_df['classification'] == 'New Topic']),
         'countries': merged_df['country'].nunique() if 'country' in merged_df.columns else 0,
         'avg_similarity': merged_df['similarity_score'].mean() if 'similarity_score' in merged_df.columns else 0,
-        'last_updated': None
+        'last_updated': None,
+        # New KPIs for cost & performance
+        'avg_latency': merged_df['latency'].mean() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
+        'median_latency': merged_df['latency'].median() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
+        'total_cost': merged_df['total_cost'].sum() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
+        'avg_cost_per_question': merged_df['total_cost'].mean() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
+        'unique_users': merged_df['user_id'].nunique() if 'user_id' in merged_df.columns else 0,
+        'unique_sessions': merged_df['session_id'].nunique() if 'session_id' in merged_df.columns else 0,
     }
     
     # Count unique new topics

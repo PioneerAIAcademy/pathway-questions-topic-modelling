@@ -46,6 +46,7 @@ FILE_PATTERNS = {
     "new_topics": "new_topics_*.parquet",
     "pathway_questions_review": "pathway_questions_review_*.parquet",
     "topic_distribution": "topic_distribution_*.parquet",
+    "general_feedback": "general_feedback_*.parquet",
     "error_log": "error_log_*.json"
 }
 
@@ -80,10 +81,17 @@ ALL_AVAILABLE_COLUMNS = [
     "output",
     "user_feedback",
     "user_language",
-    "ip_address",
     "is_suspicious",
     "cluster_id",
-    "topic_keywords"
+    "topic_keywords",
+    "latency",
+    "total_cost",
+    "session_id",
+    "user_id",
+    "tags",
+    "scores",
+    "release",
+    "role"
 ]
 
 # Column display names (for better UX)
@@ -100,17 +108,26 @@ COLUMN_DISPLAY_NAMES = {
     "output": "Response",
     "user_feedback": "User Feedback",
     "user_language": "Language",
-    "ip_address": "IP Address",
     "is_suspicious": "Suspicious",
     "cluster_id": "Cluster ID",
-    "topic_keywords": "Keywords"
+    "topic_keywords": "Keywords",
+    "latency": "Latency (s)",
+    "total_cost": "Cost ($)",
+    "session_id": "Session ID",
+    "user_id": "User ID",
+    "tags": "Tags",
+    "scores": "Scores",
+    "release": "Release",
+    "role": "Role"
 }
 
 # ============ Data Type Mappings ============
 COLUMN_TYPES = {
     "similarity_score": "float",
     "timestamp": "datetime",
-    "is_suspicious": "bool"
+    "is_suspicious": "bool",
+    "latency": "float",
+    "total_cost": "float"
 }
 
 # ============ Filter Options ============
