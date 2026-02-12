@@ -34,6 +34,22 @@ def normalize_feedback_label(value):
     return None
 
 
+def extract_feedback_reason(row: pd.Series):
+    """Get feedback reason from new feedback_comment field or legacy user_feedback text."""
+    comment = row.get('feedback_comment', None)
+    if pd.notna(comment) and str(comment).strip() != '':
+        return str(comment).strip()
+
+    value = row.get('user_feedback', None)
+    if pd.notna(value):
+        text = str(value).strip()
+        if ':' in text:
+            reason = text.split(':', 1)[1].strip()
+            return reason if reason else None
+
+    return None
+
+
 def main():
     st.title("📝 Feedback & Satisfaction")
     st.markdown("*Simple user feedback and engagement overview*")
@@ -181,6 +197,27 @@ def main():
                         st.metric("Helpful Rate", f"{helpful_rate:.1f}%", delta=f"{helpful_count:,} responses")
                     with col3:
                         st.metric("Unhelpful Rate", f"{unhelpful_rate:.1f}%", delta=f"{unhelpful_count:,} responses")
+
+                    # Show reasons users gave for unhelpful responses
+                    feedback_df['feedback_reason'] = feedback_df.apply(extract_feedback_reason, axis=1)
+                    unhelpful_with_reason = feedback_df[
+                        (feedback_df['feedback_norm'] == 'unhelpful') &
+                        (feedback_df['feedback_reason'].notna())
+                    ].copy()
+
+                    if not unhelpful_with_reason.empty:
+                        st.markdown("#### 🗒️ Unhelpful Feedback Reasons")
+                        reason_cols = ['timestamp', 'question', 'feedback_reason']
+                        available_reason_cols = [c for c in reason_cols if c in unhelpful_with_reason.columns]
+                        reason_view = unhelpful_with_reason[available_reason_cols].copy()
+                        if 'question' in reason_view.columns:
+                            reason_view['question'] = reason_view['question'].astype(str).str.slice(0, 140)
+                        reason_view = reason_view.rename(columns={
+                            'question': 'Question',
+                            'timestamp': 'Timestamp',
+                            'feedback_reason': 'Reason'
+                        })
+                        st.dataframe(reason_view, use_container_width=True, hide_index=True)
 
             # Sessions over time
             if has_sessions and 'timestamp' in df.columns:

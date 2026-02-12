@@ -379,6 +379,22 @@ def main():
             )
             feedback_df = feedback_df[feedback_df['feedback_norm'].notna()]
 
+            # Feedback reason/comment from new traces format (or legacy "Bad: reason" values)
+            if 'feedback_comment' in feedback_df.columns:
+                feedback_df['feedback_reason'] = feedback_df['feedback_comment']
+            else:
+                feedback_df['feedback_reason'] = None
+
+            legacy_reason_mask = feedback_df['feedback_reason'].isna() & feedback_df['user_feedback'].astype(str).str.contains(':', regex=False)
+            if legacy_reason_mask.any():
+                feedback_df.loc[legacy_reason_mask, 'feedback_reason'] = (
+                    feedback_df.loc[legacy_reason_mask, 'user_feedback']
+                    .astype(str)
+                    .str.split(':', n=1)
+                    .str[1]
+                    .str.strip()
+                )
+
             if feedback_df.empty:
                 st.info("Feedback exists, but no recognized Good/Bad labels were found.")
             else:
@@ -432,6 +448,23 @@ def main():
                         - Share best practices from high-quality responses
                         - Use successful responses as templates
                         """)
+
+                unhelpful_reasons = feedback_df[
+                    (feedback_df['feedback_norm'] == 'unhelpful') &
+                    (feedback_df['feedback_reason'].notna())
+                ]
+                if not unhelpful_reasons.empty:
+                    st.markdown("**Recent Unhelpful Feedback Reasons:**")
+                    display_cols = [c for c in ['timestamp', 'question', 'feedback_reason'] if c in unhelpful_reasons.columns]
+                    reason_df = unhelpful_reasons[display_cols].copy().head(20)
+                    if 'question' in reason_df.columns:
+                        reason_df['question'] = reason_df['question'].astype(str).str.slice(0, 140)
+                    reason_df = reason_df.rename(columns={
+                        'timestamp': 'Timestamp',
+                        'question': 'Question',
+                        'feedback_reason': 'Reason'
+                    })
+                    st.dataframe(reason_df, use_container_width=True, hide_index=True)
 
     
     # Footer

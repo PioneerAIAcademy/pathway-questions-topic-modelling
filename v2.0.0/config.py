@@ -80,6 +80,7 @@ ALL_AVAILABLE_COLUMNS = [
     "classification",
     "output",
     "user_feedback",
+    "feedback_comment",
     "user_language",
     "is_suspicious",
     "cluster_id",
@@ -103,6 +104,7 @@ COLUMN_DISPLAY_NAMES = {
     "classification": "Classification",
     "output": "Response",
     "user_feedback": "User Feedback",
+    "feedback_comment": "Feedback Reason",
     "user_language": "Language",
     "is_suspicious": "Suspicious",
     "cluster_id": "Cluster ID",
@@ -119,7 +121,8 @@ COLUMN_TYPES = {
     "timestamp": "datetime",
     "is_suspicious": "bool",
     "latency": "float",
-    "total_cost": "float"
+    "total_cost": "float",
+    "feedback_comment": "string"
 }
 
 # ============ Filter Options ============
