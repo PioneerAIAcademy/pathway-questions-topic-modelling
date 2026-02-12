@@ -153,7 +153,7 @@ def main():
                 st.markdown("**🔥 Peak Activity:**")
                 st.markdown(f"- **Peak Hour:** {insights['peak_hour']}:00 ({insights['peak_hour_count']} questions)")
                 st.markdown(f"- **Peak Day:** {insights['peak_day']} ({insights['peak_day_count']} questions)")
-                st.success("**💡 Tip:** Schedule support staff during peak hours for maximum impact")
+                st.success("**💡 Tip:** Schedule support missionaries and leaders during peak hours for maximum impact")
             
             with col2:
                 st.markdown("**📉 Low Activity:**")
@@ -182,7 +182,7 @@ def main():
                         **Activity Patterns:**
                         - Most questions are asked around **{peak_hour}:00**
                         - Most active day: **{peak_day}**
-                        - Use this information to optimize support staff scheduling
+                        - Use this information to optimize scheduling for support missionaries and leaders
                         
                         **Recommendations:**
                         - Ensure adequate support coverage during peak hours
@@ -419,7 +419,7 @@ def main():
                         
                         With over 20% of responses marked as unhelpful, consider:
                         - Reviewing and improving response templates
-                        - Training staff on common question patterns
+                        - Training missionaries and leaders on common question patterns
                         - Implementing response quality checks
                         - Gathering more detailed feedback on what was unhelpful
                         """)

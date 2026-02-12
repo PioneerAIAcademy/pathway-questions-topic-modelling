@@ -98,7 +98,7 @@ Dashboard automatically loads the most recent files with timestamp suffixes.
 
 ## Best Practices
 
-1. **Resource Allocation**: Use peak activity insights to schedule support staff
+1. **Resource Allocation**: Use peak activity insights to schedule support missionaries and leaders
 2. **Content Strategy**: Create FAQs from repeat questions
 3. **Localization**: Address regions with high unhelpful response rates
 4. **Trend Monitoring**: Track weekly trends to identify emerging concerns
