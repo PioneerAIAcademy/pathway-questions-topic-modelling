@@ -94,7 +94,7 @@ def plot_classification_distribution(df: pd.DataFrame):
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="classification_distribution_pie")
+    st.plotly_chart(fig, width='stretch', key="classification_distribution_pie")
 
 
 def plot_country_distribution(df: pd.DataFrame, top_n: int = 10):
@@ -125,7 +125,7 @@ def plot_country_distribution(df: pd.DataFrame, top_n: int = 10):
         yaxis=dict(autorange="reversed")
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="country_distribution_bar")
+    st.plotly_chart(fig, width='stretch', key="country_distribution_bar")
 
 
 def plot_timeline(df: pd.DataFrame, key: str = "timeline_line_chart"):
@@ -174,7 +174,7 @@ def plot_timeline(df: pd.DataFrame, key: str = "timeline_line_chart"):
         )
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
 
 
 def plot_similarity_distribution(df: pd.DataFrame):
@@ -207,7 +207,7 @@ def plot_similarity_distribution(df: pd.DataFrame):
         showlegend=False
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="similarity_distribution_histogram")
+    st.plotly_chart(fig, width='stretch', key="similarity_distribution_histogram")
 
 
 def plot_top_topics(df: pd.DataFrame, top_n: int = 10):
@@ -245,7 +245,7 @@ def plot_top_topics(df: pd.DataFrame, top_n: int = 10):
         yaxis=dict(autorange="reversed")
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="top_topics_bar")
+    st.plotly_chart(fig, width='stretch', key="top_topics_bar")
 
 
 def plot_hourly_heatmap(df: pd.DataFrame):
@@ -283,7 +283,7 @@ def plot_hourly_heatmap(df: pd.DataFrame):
         height=400
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="hourly_heatmap")
+    st.plotly_chart(fig, width='stretch', key="hourly_heatmap")
 
 
 def plot_language_distribution(df: pd.DataFrame):
@@ -312,7 +312,7 @@ def plot_language_distribution(df: pd.DataFrame):
         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="language_distribution_pie")
+    st.plotly_chart(fig, width='stretch', key="language_distribution_pie")
 
 
 # ============ NEW VISUALIZATION FUNCTIONS FOR ENHANCED INSIGHTS ============
@@ -369,7 +369,7 @@ def plot_weekly_topic_trends(df: pd.DataFrame, selected_week: str = None, key: s
         yaxis=dict(autorange="reversed")
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     return topic_counts
 
 
@@ -426,7 +426,7 @@ def plot_week_over_week_comparison(df: pd.DataFrame, week1: str, week2: str, key
         yaxis=dict(autorange="reversed")
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
 
 
 def plot_regional_topic_preferences(df: pd.DataFrame, by: str = 'country', top_n: int = 5, key: str = "regional_topics"):
@@ -487,7 +487,7 @@ def plot_regional_topic_preferences(df: pd.DataFrame, by: str = 'country', top_n
         showlegend=False
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     return regional_df
 
 
@@ -549,7 +549,7 @@ def plot_feedback_quality_by_region(df: pd.DataFrame, by: str = 'country', key: 
         showlegend=False
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     return regional_feedback
 
 
@@ -624,7 +624,7 @@ def plot_sentiment_distribution(df: pd.DataFrame, key: str = "sentiment_dist"):
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     return df_copy[['question', 'sentiment']]
 
 
@@ -690,7 +690,7 @@ def plot_topic_evolution(df: pd.DataFrame, top_n: int = 5, key: str = "topic_evo
         )
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
 
 
 def identify_repeat_questions(df: pd.DataFrame, similarity_threshold: float = 0.9, key: str = "repeat_questions"):
@@ -753,7 +753,7 @@ def identify_repeat_questions(df: pd.DataFrame, similarity_threshold: float = 0.
         yaxis=dict(autorange="reversed")
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     return repeat_df
 
 
@@ -796,7 +796,7 @@ def plot_activity_heatmap_with_insights(df: pd.DataFrame, key: str = "activity_h
         height=400
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
     
     # Calculate insights
     total_by_hour = df_copy.groupby('hour').size()
