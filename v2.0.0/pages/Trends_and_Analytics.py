@@ -306,7 +306,7 @@ def main():
             # Display the table
             st.dataframe(
                 filtered_sentiment_df[['question', 'sentiment']],
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
                 height=400
             )
@@ -341,7 +341,7 @@ def main():
                 
                 # Show the data table
                 st.markdown("**Detailed Repeat Questions:**")
-                st.dataframe(repeat_df, use_container_width=True, hide_index=True)
+                st.dataframe(repeat_df, width='stretch', hide_index=True)
         
         st.markdown("---")
         
@@ -464,7 +464,7 @@ def main():
                         'question': 'Question',
                         'feedback_reason': 'Reason'
                     })
-                    st.dataframe(reason_df, use_container_width=True, hide_index=True)
+                    st.dataframe(reason_df, width='stretch', hide_index=True)
 
     
     # Footer

@@ -159,7 +159,7 @@ def main():
                     height=350,
                     showlegend=False
                 )
-                st.plotly_chart(fig, use_container_width=True, key="questions_per_user")
+                st.plotly_chart(fig, width='stretch', key="questions_per_user")
 
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
@@ -217,7 +217,7 @@ def main():
                             'timestamp': 'Timestamp',
                             'feedback_reason': 'Reason'
                         })
-                        st.dataframe(reason_view, use_container_width=True, hide_index=True)
+                        st.dataframe(reason_view, width='stretch', hide_index=True)
 
             # Sessions over time
             if has_sessions and 'timestamp' in df.columns:
@@ -242,7 +242,7 @@ def main():
                     height=350,
                     showlegend=False
                 )
-                st.plotly_chart(fig, use_container_width=True, key="sessions_over_time")
+                st.plotly_chart(fig, width='stretch', key="sessions_over_time")
 
     # ── TAB 2: General Feedback ──
     with tab2:
@@ -269,9 +269,9 @@ def main():
                 gf_df = gf_df[mask]
 
             if display_cols:
-                st.dataframe(gf_df[display_cols], use_container_width=True, hide_index=True)
+                st.dataframe(gf_df[display_cols], width='stretch', hide_index=True)
             else:
-                st.dataframe(gf_df, use_container_width=True, hide_index=True)
+                st.dataframe(gf_df, width='stretch', hide_index=True)
 
             if 'timestamp' in gf_df.columns and len(gf_df) > 1:
                 st.markdown("#### 📈 Submissions Over Time")
@@ -293,7 +293,7 @@ def main():
                     height=350,
                     showlegend=False
                 )
-                st.plotly_chart(fig, use_container_width=True, key="gf_over_time")
+                st.plotly_chart(fig, width='stretch', key="gf_over_time")
 
 
 if __name__ == "__main__":

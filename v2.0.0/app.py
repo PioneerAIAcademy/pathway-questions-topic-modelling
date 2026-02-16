@@ -9,12 +9,17 @@ import streamlit as st
 import sys
 from pathlib import Path
 from datetime import datetime
+import logging
 
 # Add utils to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config import PAGE_CONFIG, get_theme_css
 from utils.data_loader import load_data_from_s3, merge_data_for_dashboard, calculate_kpis, get_latest_file_info
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def configure_page():
@@ -25,6 +30,10 @@ def configure_page():
     if 'theme' not in st.session_state:
         st.session_state.theme = 'light'
     
+    # Initialize data loaded flag to prevent multiple loads
+    if 'data_loaded' not in st.session_state:
+        st.session_state.data_loaded = False
+    
     # Apply theme-specific CSS
     from config import get_theme_css
     st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
@@ -32,21 +41,33 @@ def configure_page():
 
 def main():
     """Main application entry point"""
-    configure_page()
-    
-    # Header
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.title("BYU Pathway Missionary Question Analysis Dashboard")
-        st.markdown("*Professional insights into missionary questions and topic discovery*")
-    
-    with col2:
-        st.image(
-            "https://byu-pathway.brightspotcdn.com/42/2e/4d4c7b10498c84233ae51179437c/byu-pw-icon-gold-rgb-1-1.svg",
-            width=100
-        )
-    
-    st.markdown("---")
+    try:
+        configure_page()
+        
+        # Header
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.title("BYU Pathway Missionary Question Analysis Dashboard")
+            st.markdown("*Professional insights into missionary questions and topic discovery*")
+        
+    try:
+        with st.spinner("🔄 Loading data from AWS S3..."):
+            data = load_data_from_s3()
+    except Exception as e:
+        st.error(f"❌ **Error loading data from S3:** {str(e)}")
+        logger.error(f"S3 data loading error: {e}", exc_info=True)
+        st.info("""
+        **💡 Troubleshooting steps:**
+        1. Check AWS credentials in Streamlit secrets
+        2. Verify S3 bucket exists and is accessible
+        3. Ensure network connectivity to AWS
+        """)
+        st.stop
+                "https://byu-pathway.brightspotcdn.com/42/2e/4d4c7b10498c84233ae51179437c/byu-pw-icon-gold-rgb-1-1.svg",
+                width=100
+            )
+        
+        st.markdown("---")
     
     # Load data
     with st.spinner("🔄 Loading data from AWS S3..."):
@@ -110,22 +131,17 @@ def main():
     """)
     
     # Sidebar - Theme toggle and Refresh button at the bottom
-    st.sidebar.markdown("---")
+    st.s# Clear cache and session state data flags
+        st.cache_data.clear()
+        st.session_state.data_loaded = False
+        logger.info("Data cache cleared by user"")
     
     # Theme toggle
     current_theme = st.session_state.get('theme', 'light')
     theme_label = "🌙 Dark Mode" if current_theme == 'light' else "☀️ Light Mode"
-    if st.sidebar.button(theme_label, help="Toggle between light and dark themes", use_container_width=True):
+    if st.sidebar.button(theme_label, help="Toggle between light and dark themes", width='stretch'):
         st.session_state.theme = 'dark' if current_theme == 'light' else 'light'
         st.rerun()
-    
-    # Refresh data button
-    if st.sidebar.button("🔄 Refresh Data", help="Clear cache and reload data from S3", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-    
-    # Footer
-    st.markdown("---")
     
     # Developer section - Error Report Download
     st.markdown("*For developers*")
@@ -154,6 +170,27 @@ def main():
         <p>Powered by AWS S3, OpenAI, and Streamlit</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    except Exception as e:
+        st.error(f"⚠️ **Application Error:** {str(e)}")
+        logger.error(f"Application error: {e}", exc_info=True)
+        st.info("""
+        **💡 The app encountered an unexpected error.**
+        
+        Try these steps:
+        1. Refresh the page
+        2. Clear your browser cache
+        3. Check the error report for details
+        """)
+        
+        # Still allow error report download even in error state
+        if st.button("📥 Download Error Log"):
+            st.download_button(
+                label="💾 Save Error Log",
+                data=str(e),
+                file_name=f"error_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain"
+            )
 
 
 if __name__ == "__main__":

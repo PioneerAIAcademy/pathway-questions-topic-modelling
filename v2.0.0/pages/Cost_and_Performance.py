@@ -176,13 +176,13 @@ def main():
                     height=400,
                     showlegend=False
                 )
-                st.plotly_chart(fig, use_container_width=True, key="weekly_cost_bar")
+                st.plotly_chart(fig, width='stretch', key="weekly_cost_bar")
 
                 # Weekly cost table
                 with st.expander("📋 Weekly Cost Details"):
                     display_weekly = weekly_cost.copy()
                     display_weekly.columns = ['Week', 'Total Cost ($)', 'Questions', 'Avg Cost ($)', 'Max Cost ($)']
-                    st.dataframe(display_weekly, use_container_width=True, hide_index=True)
+                    st.dataframe(display_weekly, width='stretch', hide_index=True)
 
             st.markdown("---")
 
@@ -210,7 +210,7 @@ def main():
                     height=400,
                     showlegend=False
                 )
-                st.plotly_chart(fig, use_container_width=True, key="cumulative_cost_line")
+                st.plotly_chart(fig, width='stretch', key="cumulative_cost_line")
 
             st.markdown("---")
 
@@ -231,7 +231,7 @@ def main():
                 height=350,
                 showlegend=False
             )
-            st.plotly_chart(fig, use_container_width=True, key="cost_distribution_hist")
+            st.plotly_chart(fig, width='stretch', key="cost_distribution_hist")
 
             # Cost summary stats
             with st.expander("📊 Cost Statistics"):
@@ -285,7 +285,7 @@ def main():
                 height=400,
                 showlegend=False
             )
-            st.plotly_chart(fig, use_container_width=True, key="latency_distribution_hist")
+            st.plotly_chart(fig, width='stretch', key="latency_distribution_hist")
 
             # Percentile summary
             st.markdown("### 📊 Latency Percentiles")
@@ -342,7 +342,7 @@ def main():
                     hovermode='x unified',
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
-                st.plotly_chart(fig, use_container_width=True, key="latency_trend_line")
+                st.plotly_chart(fig, width='stretch', key="latency_trend_line")
 
             st.markdown("---")
 
@@ -380,7 +380,7 @@ def main():
                     height=400,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
-                st.plotly_chart(fig, use_container_width=True, key="weekly_latency_bar")
+                st.plotly_chart(fig, width='stretch', key="weekly_latency_bar")
 
     # ── TAB 3: Operational Overview ──
     with tab3:
@@ -419,7 +419,7 @@ def main():
                 height=400,
                 showlegend=False
             )
-            st.plotly_chart(fig, use_container_width=True, key="cost_vs_volume_scatter")
+            st.plotly_chart(fig, width='stretch', key="cost_vs_volume_scatter")
 
         st.markdown("---")
 

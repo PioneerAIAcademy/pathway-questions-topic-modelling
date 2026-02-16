@@ -241,7 +241,7 @@ def main():
     )
     
     # Clear filters button
-    if st.button("🔄 Clear All Filters", use_container_width=False):
+    if st.button("🔄 Clear All Filters", width='content'):
         # Clear all filter widget states
         for key in ['classification_filter', 'search_query_filter', 'countries_filter', 'similarity_filter', 'date_range_filter', 'unanswered_filter']:
             if key in st.session_state:
@@ -285,7 +285,7 @@ def main():
         
         st.dataframe(
             display_df,
-            use_container_width=True,
+            width='stretch',
             height=600,
             hide_index=True
         )

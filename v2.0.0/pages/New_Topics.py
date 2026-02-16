@@ -161,7 +161,7 @@ def main():
         
         st.dataframe(
             display_topic_questions,
-            use_container_width=True,
+            width='stretch',
             height=400,
             hide_index=True
         )
@@ -183,7 +183,7 @@ def main():
     
     st.dataframe(
         display_df,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         column_config={
             'Topic Name': st.column_config.TextColumn('Topic Name', width='medium'),

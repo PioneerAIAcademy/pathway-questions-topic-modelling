@@ -322,7 +322,7 @@ def main():
                 weekly_stats.append(stat)
             
             stats_df = pd.DataFrame(weekly_stats)
-            st.dataframe(stats_df, use_container_width=True, hide_index=True)
+            st.dataframe(stats_df, width='stretch', hide_index=True)
         
         # Insights
         with st.expander("💡 Evolution Insights"):

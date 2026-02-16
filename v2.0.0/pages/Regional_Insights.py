@@ -91,7 +91,7 @@ def plot_regional_heatmap(df: pd.DataFrame, metric: str = 'count', key: str = "r
         height=500
     )
     
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, width='stretch', key=key)
 
 
 def analyze_regional_topics(df: pd.DataFrame, region_type: str, region_name: str):
@@ -167,7 +167,7 @@ def analyze_regional_topics(df: pd.DataFrame, region_type: str, region_name: str
                 yaxis=dict(autorange="reversed")
             )
             
-            st.plotly_chart(fig, use_container_width=True, key=f"regional_topics_{region_name}")
+            st.plotly_chart(fig, width='stretch', key=f"regional_topics_{region_name}")
             
             # Topic percentage breakdown
             with st.expander("💡 Topic Breakdown"):
@@ -278,7 +278,7 @@ def main():
             
             if regional_data is not None:
                 with st.expander("📊 Detailed Country Statistics"):
-                    st.dataframe(regional_data, use_container_width=True, hide_index=True)
+                    st.dataframe(regional_data, width='stretch', hide_index=True)
             
             st.markdown("---")
             
@@ -301,7 +301,7 @@ def main():
                     )
                     
                     fig.update_layout(height=400)
-                    st.plotly_chart(fig, use_container_width=True, key="lang_country_dist")
+                    st.plotly_chart(fig, width='stretch', key="lang_country_dist")
     
     with tab2:
         st.markdown("### 📍 State/Province-Level Insights")
@@ -332,7 +332,7 @@ def main():
                 yaxis=dict(autorange="reversed")
             )
             
-            st.plotly_chart(fig, use_container_width=True, key="state_distribution")
+            st.plotly_chart(fig, width='stretch', key="state_distribution")
             
             st.markdown("---")
             
@@ -342,7 +342,7 @@ def main():
             
             if regional_data is not None:
                 with st.expander("📊 Detailed State Statistics"):
-                    st.dataframe(regional_data, use_container_width=True, hide_index=True)
+                    st.dataframe(regional_data, width='stretch', hide_index=True)
     
     with tab3:
         st.markdown("### 📊 Response Quality by Region")
@@ -394,7 +394,7 @@ def main():
                 
                 if state_feedback is not None:
                     with st.expander("📊 State Feedback Details"):
-                        st.dataframe(state_feedback, use_container_width=True, hide_index=True)
+                        st.dataframe(state_feedback, width='stretch', hide_index=True)
     
     with tab4:
         st.markdown("### 🔍 Regional Deep Dive")
