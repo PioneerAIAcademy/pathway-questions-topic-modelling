@@ -579,32 +579,37 @@ def plot_sentiment_distribution(df: pd.DataFrame, key: str = "sentiment_dist"):
         st.info("No question data available")
         return None
     
+    import re
+
     df_copy = df.copy()
-    
-    # Simple sentiment detection based on keywords and punctuation
+
+    # Word-boundary patterns (compiled once for performance)
+    _NEG_WORDS = [
+        'problem', 'issue', 'error', 'fail', 'failed', 'failure', 'wrong',
+        'difficult', 'confused', 'frustrated', 'unable', 'missing', 'lost',
+        'broken', 'bug', 'crash', 'slow', 'unresponsive', 'disconnect',
+        'timeout', 'cancelled', 'rejected', 'incomplete', 'blocked',
+        'denied', 'unavailable', 'complain', 'urgent', 'stuck', 'refused',
+    ]
+    _POS_WORDS = [
+        'thank', 'thanks', 'great', 'excellent', 'appreciate', 'perfect',
+        'love', 'awesome', 'wonderful', 'amazing', 'helpful', 'resolved',
+    ]
+    _neg_re = re.compile(r'\b(?:' + '|'.join(_NEG_WORDS) + r')\b')
+    _pos_re = re.compile(r'\b(?:' + '|'.join(_POS_WORDS) + r')\b')
+
     def detect_sentiment(question):
         if pd.isna(question):
             return 'Neutral'
         question_lower = str(question).lower()
-        
-        # Negative indicators
-        negative_words = ['not', 'no', 'never', 'can\'t', 'cannot', 'won\'t', 'don\'t', 'problem', \
-                  'issue', 'error', 'fail', 'failed', 'failure', 'wrong', 'difficult', \
-                  'confused', 'help', 'frustrated', 'unable', 'delay', 'late', 'missing', \
-                  'lost', 'broken', 'bug', 'crash', 'slow', 'unresponsive', 'disconnect', \
-                  'timeout', 'cancel', 'cancelled', 'reject', 'rejected', 'incomplete', \
-                  'conflict', 'error message', 'blocked', 'denied', 'unavailable', 'complain']
 
-        # Positive indicators
-        positive_words = ['thank', 'great', 'good', 'excellent', 'appreciate', 'perfect', 'love']
-        
-        negative_count = sum(1 for word in negative_words if word in question_lower)
-        positive_count = sum(1 for word in positive_words if word in question_lower)
-        
-        # Questions with multiple question marks or exclamation marks suggest urgency/frustration
-        if question.count('?') > 1 or question.count('!') > 0:
+        negative_count = len(_neg_re.findall(question_lower))
+        positive_count = len(_pos_re.findall(question_lower))
+
+        # Multiple question marks or exclamation marks suggest urgency
+        if question.count('?') > 2 or question.count('!') > 1:
             negative_count += 1
-        
+
         if negative_count > positive_count:
             return 'Negative/Urgent'
         elif positive_count > negative_count:
