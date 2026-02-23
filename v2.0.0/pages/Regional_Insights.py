@@ -243,9 +243,12 @@ def main():
     
     with col4:
         if 'user_feedback' in df.columns:
-            feedback_df = df[df['user_feedback'].notna()]
+            from utils.visualizations import _normalize_feedback
+            feedback_df = df[df['user_feedback'].notna()].copy()
+            feedback_df['feedback_norm'] = feedback_df['user_feedback'].apply(_normalize_feedback)
+            feedback_df = feedback_df[feedback_df['feedback_norm'].notna()]
             if not feedback_df.empty:
-                helpful_count = len(feedback_df[feedback_df['user_feedback'] == 'helpful'])
+                helpful_count = (feedback_df['feedback_norm'] == 'helpful').sum()
                 total_feedback = len(feedback_df)
                 helpful_rate = (helpful_count / total_feedback * 100)
                 st.metric(
