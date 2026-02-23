@@ -47,8 +47,12 @@ def plot_regional_heatmap(df: pd.DataFrame, metric: str = 'count', key: str = "r
     if metric == 'count':
         pivot_data = df_filtered.groupby(['country', 'state']).size().reset_index(name='value')
     elif metric == 'unhelpful_rate' and 'user_feedback' in df.columns:
-        pivot_data = df_filtered[df_filtered['user_feedback'].notna()].groupby(['country', 'state']).agg({
-            'user_feedback': lambda x: (x == 'unhelpful').sum() / len(x) * 100 if len(x) > 0 else 0
+        from utils.visualizations import _normalize_feedback
+        fb_df = df_filtered.copy()
+        fb_df['feedback_norm'] = fb_df['user_feedback'].apply(_normalize_feedback)
+        fb_df = fb_df[fb_df['feedback_norm'].notna()]
+        pivot_data = fb_df.groupby(['country', 'state']).agg({
+            'feedback_norm': lambda x: (x == 'unhelpful').sum() / len(x) * 100 if len(x) > 0 else 0
         }).reset_index()
         pivot_data.columns = ['country', 'state', 'value']
     elif metric == 'avg_similarity' and 'similarity_score' in df.columns:

@@ -10,6 +10,18 @@ from typing import Dict, List
 from config import BYU_COLORS, CHART_COLOR_PALETTE
 
 
+def _normalize_feedback(value):
+    """Map raw feedback values to helpful/unhelpful."""
+    if pd.isna(value):
+        return None
+    text = str(value).strip().lower()
+    if text in {'good', 'helpful', 'thumbs_up', 'positive', '1', 'true', 'yes'}:
+        return 'helpful'
+    if text in {'bad', 'unhelpful', 'thumbs_down', 'negative', '-1', 'false', 'no'}:
+        return 'unhelpful'
+    return None
+
+
 def create_kpi_cards(kpis: Dict[str, any]):
     """
     Display KPI cards in a grid layout.
@@ -505,7 +517,8 @@ def plot_feedback_quality_by_region(df: pd.DataFrame, by: str = 'country', key: 
         return None
     
     df_copy = df.copy()
-    df_copy = df_copy[df_copy['user_feedback'].notna()]
+    df_copy['feedback_norm'] = df_copy['user_feedback'].apply(_normalize_feedback)
+    df_copy = df_copy[df_copy['feedback_norm'].notna()]
     
     if df_copy.empty:
         st.info("No feedback data available")
@@ -513,7 +526,7 @@ def plot_feedback_quality_by_region(df: pd.DataFrame, by: str = 'country', key: 
     
     # Calculate unhelpful rate by region
     regional_feedback = df_copy.groupby(by).agg({
-        'user_feedback': lambda x: (x == 'unhelpful').sum() / len(x) * 100 if len(x) > 0 else 0,
+        'feedback_norm': lambda x: (x == 'unhelpful').sum() / len(x) * 100 if len(x) > 0 else 0,
         'question': 'count'
     }).reset_index()
     regional_feedback.columns = [by, 'unhelpful_rate', 'total_feedback']
