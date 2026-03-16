@@ -207,14 +207,23 @@ def main():
 
                     if not unhelpful_with_reason.empty:
                         st.markdown("#### 🗒️ Unhelpful Feedback Reasons")
-                        reason_cols = ['timestamp', 'question', 'feedback_reason']
+                        reason_cols = ['timestamp', 'question', 'output', 'feedback_reason']
                         available_reason_cols = [c for c in reason_cols if c in unhelpful_with_reason.columns]
                         reason_view = unhelpful_with_reason[available_reason_cols].copy()
                         if 'question' in reason_view.columns:
                             reason_view['question'] = reason_view['question'].astype(str).str.slice(0, 140)
+                        if 'output' in reason_view.columns:
+                            reason_view['output'] = (
+                                reason_view['output']
+                                .astype(str)
+                                .str.replace('\n', ' ', regex=False)
+                                .str.replace('\r', ' ', regex=False)
+                                .str.slice(0, 220)
+                            )
                         reason_view = reason_view.rename(columns={
                             'question': 'Question',
                             'timestamp': 'Timestamp',
+                            'output': 'Chatbot Response',
                             'feedback_reason': 'Reason'
                         })
                         st.dataframe(reason_view, width='stretch', hide_index=True)
