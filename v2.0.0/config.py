@@ -88,7 +88,15 @@ ALL_AVAILABLE_COLUMNS = [
     "latency",
     "total_cost",
     "session_id",
-    "user_id"
+    "user_id",
+    # New columns
+    "is_not_answered",
+    "source_type",
+    "is_calendar_question",
+    "calendar_query_type",
+    "calendar_pipeline_status",
+    "calendar_card_title",
+    "role",
 ]
 
 # Column display names (for better UX)
@@ -112,7 +120,15 @@ COLUMN_DISPLAY_NAMES = {
     "latency": "Latency (s)",
     "total_cost": "Cost ($)",
     "session_id": "Session ID",
-    "user_id": "User ID"
+    "user_id": "User ID",
+    # New columns
+    "is_not_answered": "Not Answered",
+    "source_type": "Source",
+    "is_calendar_question": "Calendar Question",
+    "calendar_query_type": "Calendar Type",
+    "calendar_pipeline_status": "Calendar Status",
+    "calendar_card_title": "Calendar Card",
+    "role": "User Role",
 }
 
 # ============ Data Type Mappings ============
@@ -120,6 +136,9 @@ COLUMN_TYPES = {
     "similarity_score": "float",
     "timestamp": "datetime",
     "is_suspicious": "bool",
+    "is_not_answered": "bool",
+    "is_calendar_question": "bool",
+    "calendar_cache_hit": "bool",
     "latency": "float",
     "total_cost": "float",
     "feedback_comment": "string"
@@ -127,6 +146,7 @@ COLUMN_TYPES = {
 
 # ============ Filter Options ============
 CLASSIFICATION_OPTIONS = ["All", "Existing Topic", "New Topic", "Uncategorized"]
+SOURCE_TYPE_OPTIONS = ["All", "RAG", "Calendar"]
 SORT_OPTIONS = {
     "Timestamp (Newest First)": ("timestamp", False),
     "Timestamp (Oldest First)": ("timestamp", True),

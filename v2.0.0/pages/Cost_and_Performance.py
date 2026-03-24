@@ -386,6 +386,67 @@ def main():
     with tab3:
         st.markdown("### 📊 Operational Overview")
 
+        # RAG vs Calendar comparison
+        has_source = 'source_type' in df.columns
+        if has_source and (has_cost or has_latency):
+            st.markdown("#### 📅 RAG vs Calendar Pipeline Comparison")
+
+            rag_df = df[df['source_type'] == 'rag']
+            cal_df = df[df['source_type'] == 'calendar']
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("RAG Questions", f"{len(rag_df):,}")
+                st.metric("Calendar Questions", f"{len(cal_df):,}")
+
+            with col2:
+                if has_latency:
+                    rag_lat = rag_df[rag_df['latency'] > 0]['latency']
+                    cal_lat = cal_df[cal_df['latency'] > 0]['latency']
+                    st.metric("RAG Avg Latency",
+                              f"{rag_lat.mean():.2f}s" if len(rag_lat) > 0 else "N/A")
+                    st.metric("Calendar Avg Latency",
+                              f"{cal_lat.mean():.2f}s" if len(cal_lat) > 0 else "N/A")
+
+            with col3:
+                if has_cost:
+                    rag_cost = rag_df[rag_df['total_cost'] > 0]['total_cost']
+                    cal_cost = cal_df[cal_df['total_cost'] > 0]['total_cost']
+                    st.metric("RAG Avg Cost",
+                              f"${rag_cost.mean():.6f}" if len(rag_cost) > 0 else "N/A")
+                    st.metric("Calendar Avg Cost",
+                              f"${cal_cost.mean():.6f}" if len(cal_cost) > 0 else "N/A")
+
+            # Side-by-side latency distributions
+            if has_latency and len(cal_df) > 0:
+                fig = go.Figure()
+                rag_lat_vals = rag_df[rag_df['latency'] > 0]['latency']
+                cal_lat_vals = cal_df[cal_df['latency'] > 0]['latency']
+
+                if len(rag_lat_vals) > 0:
+                    fig.add_trace(go.Histogram(
+                        x=rag_lat_vals, name='RAG',
+                        marker=dict(color=BYU_COLORS['primary']),
+                        opacity=0.7, nbinsx=30
+                    ))
+                if len(cal_lat_vals) > 0:
+                    fig.add_trace(go.Histogram(
+                        x=cal_lat_vals, name='Calendar',
+                        marker=dict(color=BYU_COLORS['accent2']),
+                        opacity=0.7, nbinsx=30
+                    ))
+                fig.update_layout(
+                    title="Latency Distribution: RAG vs Calendar",
+                    xaxis_title="Latency (seconds)",
+                    yaxis_title="Count",
+                    barmode='overlay', height=350,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig, width='stretch', key="rag_vs_cal_latency")
+
+            st.markdown("---")
+
         # Cost vs Volume correlation
         if has_cost and 'timestamp' in df.columns:
             st.markdown("#### 💰 Cost vs Question Volume")
@@ -425,7 +486,6 @@ def main():
 
         # Efficiency insights
         if has_cost and has_latency:
-            st.markdown("---")
             st.markdown("#### 💡 Efficiency Insights")
 
             cost_data = df[df['total_cost'] > 0]['total_cost']
@@ -446,12 +506,12 @@ def main():
             with col2:
                 st.markdown("**Latency Performance:**")
                 if len(lat_data) > 0:
-                    fast_count = (lat_data < 1.0).sum()
+                    fast_count = (lat_data < 3.0).sum()
                     fast_pct = fast_count / len(lat_data) * 100
-                    st.markdown(f"- **Under 1s:** {fast_count} ({fast_pct:.1f}%)")
-                    slow_count = (lat_data > 2.0).sum()
+                    st.markdown(f"- **Under 3s:** {fast_count} ({fast_pct:.1f}%)")
+                    slow_count = (lat_data > 10.0).sum()
                     slow_pct = slow_count / len(lat_data) * 100
-                    st.markdown(f"- **Over 2s:** {slow_count} ({slow_pct:.1f}%)")
+                    st.markdown(f"- **Over 10s:** {slow_count} ({slow_pct:.1f}%)")
                     st.markdown(f"- **Avg response:** {lat_data.mean():.2f}s")
 
 

@@ -61,7 +61,7 @@ def create_kpi_cards(kpis: Dict[str, any]):
     
     # Second row of KPIs
     col5, col6, col7, col8 = st.columns(4)
-    
+
     with col5:
         if kpis['avg_similarity'] > 0:
             st.metric(
@@ -69,8 +69,38 @@ def create_kpi_cards(kpis: Dict[str, any]):
                 value=f"{kpis['avg_similarity']:.3f}",
                 help="Average similarity score for matched questions"
             )
-    
+
     with col6:
+        cal_q = kpis.get('calendar_questions', 0)
+        if cal_q > 0:
+            cal_rate = kpis.get('calendar_success_rate')
+            st.metric(
+                label="📅 Calendar Questions",
+                value=f"{cal_q:,}",
+                delta=f"{cal_rate}% success" if cal_rate is not None else None,
+                help="Questions handled by the academic calendar pipeline"
+            )
+        elif kpis['last_updated']:
+            last_updated_str = kpis['last_updated'].strftime("%Y-%m-%d %H:%M")
+            st.metric(
+                label="🕐 Last Updated",
+                value=last_updated_str,
+                help="Last time data was updated"
+            )
+
+    with col7:
+        na_count = kpis.get('not_answered_count', 0)
+        na_rate = kpis.get('not_answered_rate')
+        if na_count > 0:
+            st.metric(
+                label="❌ Not Answered",
+                value=f"{na_count:,}",
+                delta=f"{na_rate}% of total" if na_rate is not None else None,
+                delta_color="inverse",
+                help="Questions the chatbot could not answer (refusal / fallback responses)"
+            )
+
+    with col8:
         if kpis['last_updated']:
             last_updated_str = kpis['last_updated'].strftime("%Y-%m-%d %H:%M")
             st.metric(
