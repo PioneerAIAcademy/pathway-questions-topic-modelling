@@ -289,6 +289,16 @@ def main():
 
             # Percentile summary
             st.markdown("### 📊 Latency Percentiles")
+            with st.expander("ℹ️ What do P50, P95, P99 mean?"):
+                st.markdown("""
+                These are **percentiles** — they tell you how fast the chatbot responds for most users.
+
+                - **P50 (Median):** Half of all responses are faster than this.
+                - **P95:** 95% of responses are faster — only 1 in 20 is slower.
+                - **P99:** 99% of responses are faster — only the rare slowest 1%.
+
+                Lower is better. If P95 is high, some users are waiting a long time.
+                """)
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
                 st.metric("Min", f"{lat_df['latency'].min():.3f}s")
@@ -390,6 +400,15 @@ def main():
         has_source = 'source_type' in df.columns
         if has_source and (has_cost or has_latency):
             st.markdown("#### 📅 RAG vs Calendar Pipeline Comparison")
+            with st.expander("ℹ️ What are RAG and Calendar?"):
+                st.markdown("""
+                **RAG (Retrieval-Augmented Generation)** is the default path — the chatbot searches a knowledge base
+                and uses AI to write a custom answer. Most questions go through RAG.
+
+                **Calendar Pipeline** is a specialized path for date-related questions (e.g., "When does Block 3 start?").
+                Instead of searching the knowledge base, it looks up the academic calendar directly and returns
+                a structured calendar card. Calendar questions are typically slower (more steps) but more accurate for dates.
+                """)
 
             rag_df = df[df['source_type'] == 'rag']
             cal_df = df[df['source_type'] == 'calendar']
@@ -513,6 +532,15 @@ def main():
                     slow_pct = slow_count / len(lat_data) * 100
                     st.markdown(f"- **Over 10s:** {slow_count} ({slow_pct:.1f}%)")
                     st.markdown(f"- **Avg response:** {lat_data.mean():.2f}s")
+
+            with st.expander("ℹ️ Reading these numbers"):
+                st.markdown("""
+                - **Cost** is what we pay the AI provider (OpenAI) per question. Most questions cost a fraction of a cent.
+                - **Latency** is how long the user waits for a response. This is end-to-end time including
+                  retrieval, AI processing, and streaming.
+                - Calendar questions tend to cost slightly more and take longer because they involve multiple
+                  steps (intent detection, date extraction, card building).
+                """)
 
 
 if __name__ == "__main__":

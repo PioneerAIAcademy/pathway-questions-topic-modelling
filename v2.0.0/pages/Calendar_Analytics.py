@@ -25,6 +25,15 @@ st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 def main():
     st.title("📅 Calendar Analytics")
     st.markdown("*Academic calendar question patterns, success rates, and usage insights*")
+    with st.expander("ℹ️ What is the Calendar Pipeline?"):
+        st.markdown("""
+        When a student asks a date-related question (e.g., "When does Block 3 start?"),
+        the chatbot uses a **Calendar Pipeline** instead of the normal knowledge-base search.
+        It looks up the academic calendar directly and returns an interactive date card.
+
+        This page shows how often students ask calendar questions, what types they ask,
+        and how well the pipeline performs.
+        """)
     st.markdown("---")
 
     ensure_data_loaded()

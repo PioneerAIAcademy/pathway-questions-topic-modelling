@@ -181,6 +181,13 @@ def main():
     
     # Fourth row: Unanswered questions filter
     st.markdown("#### 🚫 Unanswered Questions")
+    with st.expander("ℹ️ What counts as 'not answered'?"):
+        st.markdown("""
+        A question is flagged as **not answered** when the chatbot replies with a refusal
+        or fallback message like *"I don't have that information"* or *"please check Who to Contact."*
+        This means the knowledge base didn't have what the student needed. Tracking these helps
+        us find gaps in our content.
+        """)
     show_unanswered_only = st.checkbox(
         "Show only questions the chatbot couldn't answer",
         value=False,
