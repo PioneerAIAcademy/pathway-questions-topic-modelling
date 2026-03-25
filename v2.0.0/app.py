@@ -115,9 +115,9 @@ def main():
         # Navigation info
         st.info("""
         ### 🧭 Navigation
-        
+
         Use the sidebar to navigate between different sections:
-        
+
         - **📊 app** (Home): Overview and key metrics
         - **📋 Questions Table**: Interactive table with filters and search
         - **📈 Trends & Analytics**: Detailed visualizations and insights with advanced analytics
@@ -126,7 +126,8 @@ def main():
         - **🌍 Regional Insights**: Geographic patterns and localization opportunities
         - **💰 Cost & Performance**: Cost evaluation, latency analysis, and operational metrics
         - **📝 Feedback & Satisfaction**: User feedback, sessions, and engagement
-        
+        - **📅 Calendar Analytics**: Academic calendar question patterns and pipeline performance
+
         💡 **Tip:** All filters and sorting happen instantly without page refresh!
         """)
         

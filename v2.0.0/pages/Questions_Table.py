@@ -15,126 +15,74 @@ from config import CLASSIFICATION_OPTIONS, PAGE_CONFIG, get_theme_css
 from utils.data_loader import filter_dataframe, ensure_data_loaded
 
 
-# Hardcoded fallback messages from the chatbot (when it can't answer)
-# These patterns are extracted from the LocalizationManager and cover 20 languages
+# Fallback / refusal patterns for detecting unanswered questions.
+# Used as a runtime fallback when the pre-computed is_not_answered column is missing.
+# Covers: chatbot refusals, "who to contact" redirects, "contexts do not contain" responses,
+# localization-manager fallback messages (20 languages).
 FALLBACK_MESSAGE_PATTERNS = [
-    # English patterns
+    # English refusal patterns (from chatbot engine)
+    r"I only have information about BYU-Pathway Worldwide",
+    r"I'm not sure about that, but",
+    r"Sorry, I don't have information on that",
+    r"Sorry, I don't know",
     r"Sorry, I can't answer that",
     r"I'm sorry, but I can't assist with that request",
     r"Sorry, I can't comply with that request",
     r"could you please rephrase your question",
-    r"make it shorter",
     r"I can't assist with that",
-    
-    # Spanish patterns
+    # LLM-generated refusals when no relevant nodes found
+    r"The contexts do not (?:contain|provide|specify)",
+    r"The provided contexts do not (?:contain|provide|specify)",
+    r"The information (?:regarding|about) .{0,80} is not (?:available|specified)",
+    r"is not available in the (?:retrieved nodes|provided contexts)",
+    # Spanish
     r"Lo siento, no puedo responder eso",
-    r"Lo siento, no puedo ayudar con esa solicitud",
-    r"Lo siento, no puedo cumplir con esa solicitud",
-    r"podrías reformular tu pregunta",
-    r"hacerla más corta",
-    
-    # French patterns
-    r"Désolé, je ne peux pas répondre",
-    r"Je suis désolé, mais je ne peux pas vous aider",
-    r"reformuler votre question",
-    r"la raccourcir",
-    
-    # German patterns
-    r"Entschuldigung, ich kann das nicht beantworten",
-    r"Es tut mir leid, aber ich kann bei dieser Anfrage nicht helfen",
-    r"umformulieren und kürzer machen",
-    
-    # Italian patterns
-    r"Scusa, non posso rispondere a questo",
-    r"Mi dispiace, ma non posso aiutare",
-    r"riformulare la tua domanda",
-    
-    # Portuguese patterns
+    r"No tengo información",
+    r"No estoy seguro",
+    # Portuguese
     r"Desculpe, não posso responder isso",
-    r"Sinto muito, mas não posso ajudar",
-    r"reformular sua pergunta",
-    
-    # Dutch patterns
-    r"Sorry, ik kan dat niet beantwoorden",
-    r"Het spijt me, maar ik kan niet helpen",
-    r"herformuleren",
-    
-    # Russian patterns
+    r"Não tenho informações",
+    # French
+    r"Désolé, je ne peux pas répondre",
+    r"Je ne suis pas sûr",
+    # Indonesian
+    r"Saya tidak yakin",
+    # German
+    r"Entschuldigung, ich kann das nicht beantworten",
+    # Italian
+    r"Scusa, non posso rispondere a questo",
+    # Russian
     r"Извините, я не могу на это ответить",
-    r"Извините, но я не могу помочь",
-    r"переформулировать свой вопрос",
-    
-    # Chinese patterns
+    # Chinese
     r"抱歉，我无法回答",
-    r"很抱歉，我无法协助",
-    r"重新表述您的问题",
-    
-    # Japanese patterns
+    # Japanese
     r"申し訳ございませんが、それにはお答えできません",
-    r"申し訳ございませんが、そのリクエストにはお手伝いできません",
-    r"質問を言い換えて",
-    
-    # Korean patterns
-    r"죄송합니다",
+    # Korean
     r"답변할 수 없습니다",
-    r"질問을 다시 표현하고",
-    
-    # Arabic patterns
+    # Arabic
     r"آسف، لا أستطيع الإجابة",
-    r"عذراً، لا أستطيع المساعدة",
-    
-    # Hebrew patterns
-    r"סליחה, אני לא יכול לענות",
-    r"אני מצטער, אבל אני לא יכול לעזור",
-    
-    # Hindi patterns
-    r"क्षमा करें, मैं इसका उत्तर नहीं दे सकता",
-    r"मुझे खेद है, लेकिन मैं इस अनुरोध में सहायता नहीं कर सकता",
-    
-    # Thai patterns
+    # Thai
     r"ขอโทษ ฉันไม่สามารถตอบได้",
-    r"ขอโทษ แต่ฉันไม่สามารถช่วยเหลือคำขอนั้นได้",
-    
-    # Vietnamese patterns
+    # Vietnamese
     r"Xin lỗi, tôi không thể trả lời điều đó",
-    r"Tôi xin lỗi, nhưng tôi không thể hỗ trợ yêu cầu đó",
-    
-    # Turkish patterns
+    # Turkish
     r"Üzgünüm, buna cevap veremem",
-    r"Üzgünüm ama bu istekte yardımcı olamam",
-    
-    # Polish patterns
+    # Polish
     r"Przepraszam, nie mogę na to odpowiedzieć",
-    r"Przykro mi, ale nie mogę pomóc w tej prośbie",
-    
-    # Czech patterns
-    r"Omlouvám se, nemohu na to odpovědět",
-    r"Je mi líto, ale nemohu pomoci s touto žádostí",
-    
-    # Hungarian patterns
-    r"Sajnálom, erre nem tudok válaszolni",
-    r"Sajnálom, de ebben a kérésben nem tudok segíteni",
 ]
 
 
 def is_unanswered_question(output_text: str) -> bool:
-    """
-    Check if the chatbot output contains a fallback 'cannot answer' message.
-    
-    Args:
-        output_text: The chatbot's response/output text
-        
-    Returns:
-        True if the output contains a fallback message, False otherwise
+    """Check if the chatbot output contains a refusal / 'cannot answer' message.
+
+    This is used as a runtime fallback when the pre-computed is_not_answered
+    column is not available in the data.
     """
     if pd.isna(output_text) or not isinstance(output_text, str):
         return False
-    
-    # Check if any fallback pattern is in the output
     for pattern in FALLBACK_MESSAGE_PATTERNS:
         if re.search(pattern, output_text, re.IGNORECASE):
             return True
-    
     return False
 
 # Configure page settings (needed for direct page access)
@@ -261,12 +209,15 @@ def main():
     )
     
     # Apply unanswered questions filter if checkbox is checked
-    if show_unanswered_only and 'output' in filtered_df.columns:
-        # Add a column to identify unanswered questions
-        filtered_df['is_unanswered'] = filtered_df['output'].apply(is_unanswered_question)
-        filtered_df = filtered_df[filtered_df['is_unanswered'] == True].copy()
-        # Drop the helper column before displaying
-        filtered_df = filtered_df.drop(columns=['is_unanswered'])
+    if show_unanswered_only:
+        if 'is_not_answered' in filtered_df.columns:
+            # Use pre-computed column from notebook pipeline
+            filtered_df = filtered_df[filtered_df['is_not_answered'] == True].copy()
+        elif 'output' in filtered_df.columns:
+            # Runtime fallback for older data without pre-computed column
+            filtered_df['_unanswered'] = filtered_df['output'].apply(is_unanswered_question)
+            filtered_df = filtered_df[filtered_df['_unanswered'] == True].copy()
+            filtered_df = filtered_df.drop(columns=['_unanswered'])
     
     # Results count
     st.markdown(f"### 📊 Showing {len(filtered_df):,} of {len(df):,} questions")
@@ -312,10 +263,13 @@ def main():
                     st.metric("New Topics %", f"{new_topic_pct:.1f}%")
         
         # Additional unanswered questions statistics
-        if 'output' in filtered_df.columns:
+        if 'is_not_answered' in filtered_df.columns or 'output' in filtered_df.columns:
             with st.expander("🚫 Unanswered Questions Analysis"):
-                # Calculate unanswered questions
-                unanswered_mask = filtered_df['output'].apply(is_unanswered_question)
+                # Prefer pre-computed column, fallback to runtime detection
+                if 'is_not_answered' in filtered_df.columns:
+                    unanswered_mask = filtered_df['is_not_answered'] == True
+                else:
+                    unanswered_mask = filtered_df['output'].apply(is_unanswered_question)
                 unanswered_count = unanswered_mask.sum()
                 unanswered_pct = (unanswered_count / len(filtered_df) * 100) if len(filtered_df) > 0 else 0
                 
@@ -354,23 +308,22 @@ def main():
     st.markdown("---")
     st.info("""
     ### 💡 Tips for Using the Table
-    
+
     - **Filter** questions by classification, date, country, or similarity score
     - **Search** for specific keywords in questions
-    - **Find unanswered questions** using the checkbox to detect hardcoded fallback responses across 20 languages
+    - **Find unanswered questions** using the checkbox to detect fallback responses across 20+ languages
     - **Sort** columns by clicking on the column headers
     - **Resize** columns by dragging the column borders
     - All operations happen **instantly** without page refresh!
-    
+
     #### About Unanswered Questions Detection
-    
-    The system automatically detects when the chatbot couldn't answer a question by looking for hardcoded fallback messages in the `output` column. These messages are detected across 20 languages including English, Spanish, French, German, Chinese, Japanese, Korean, Arabic, and more.
-    
-    **Common fallback patterns include:**
-    - "Sorry, I can't answer that; could you please rephrase your question..."
-    - "I'm sorry, but I can't assist with that request..."
-    - "Sorry, I can't comply with that request..."
-    - And their translations in 19 other languages
+
+    The system detects when the chatbot couldn't answer a question by looking for refusal patterns in the response. Detection covers:
+
+    - **Explicit refusals:** "I only have information about BYU-Pathway Worldwide..."
+    - **Knowledge gaps:** "I'm not sure about that, but you can check Who to Contact..."
+    - **Context failures:** "The contexts do not contain information about..."
+    - **Localized refusals** in 20+ languages (Spanish, Portuguese, French, etc.)
     """)
 
 

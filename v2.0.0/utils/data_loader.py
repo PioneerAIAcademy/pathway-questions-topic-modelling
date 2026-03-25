@@ -273,14 +273,35 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
         'countries': merged_df['country'].nunique() if 'country' in merged_df.columns else 0,
         'avg_similarity': merged_df['similarity_score'].mean() if 'similarity_score' in merged_df.columns else 0,
         'last_updated': None,
-        # New KPIs for cost & performance
+        # Cost & performance
         'avg_latency': merged_df['latency'].mean() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
         'median_latency': merged_df['latency'].median() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
         'total_cost': merged_df['total_cost'].sum() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
         'avg_cost_per_question': merged_df['total_cost'].mean() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
         'unique_users': merged_df['user_id'].nunique() if 'user_id' in merged_df.columns else 0,
         'unique_sessions': merged_df['session_id'].nunique() if 'session_id' in merged_df.columns else 0,
+        # Calendar & not-answered KPIs
+        'calendar_questions': int(merged_df['is_calendar_question'].sum()) if 'is_calendar_question' in merged_df.columns else 0,
+        'calendar_success_rate': None,
+        'not_answered_count': int(merged_df['is_not_answered'].sum()) if 'is_not_answered' in merged_df.columns else 0,
+        'not_answered_rate': None,
+        'rag_questions': 0,
     }
+
+    # Calendar success rate
+    if 'is_calendar_question' in merged_df.columns and kpis['calendar_questions'] > 0:
+        cal_df = merged_df[merged_df['is_calendar_question'] == True]
+        if 'calendar_pipeline_status' in cal_df.columns:
+            success_count = (cal_df['calendar_pipeline_status'] == 'success').sum()
+            kpis['calendar_success_rate'] = round(success_count / len(cal_df) * 100, 1)
+
+    # Not-answered rate
+    if kpis['total_questions'] > 0 and kpis['not_answered_count'] > 0:
+        kpis['not_answered_rate'] = round(kpis['not_answered_count'] / kpis['total_questions'] * 100, 1)
+
+    # RAG vs Calendar split
+    if 'source_type' in merged_df.columns:
+        kpis['rag_questions'] = int((merged_df['source_type'] == 'rag').sum())
     
     # Count unique new topics
     # new_topics DataFrame has columns: topic_name, representative_question, question_count
