@@ -47,6 +47,7 @@ FILE_PATTERNS = {
     "pathway_questions_review": "pathway_questions_review_*.parquet",
     "topic_distribution": "topic_distribution_*.parquet",
     "general_feedback": "general_feedback_*.parquet",
+    "feature_events": "feature_events_*.parquet",
     "error_log": "error_log_*.json"
 }
 
@@ -61,14 +62,16 @@ PAGE_CONFIG = {
 # ============ Dashboard Default Columns ============
 # Columns shown by default in the main table
 DEFAULT_VISIBLE_COLUMNS = [
-    "input",  # The question
+    "question",  # The question
     "timestamp",
     "country",
-    "state"
+    "state",
+    "source_type"
 ]
 
 # All available columns (user can show/hide these)
 ALL_AVAILABLE_COLUMNS = [
+    "question",
     "input",
     "timestamp",
     "country",
@@ -96,11 +99,21 @@ ALL_AVAILABLE_COLUMNS = [
     "calendar_query_type",
     "calendar_pipeline_status",
     "calendar_card_title",
+    "is_tuition_question",
+    "tuition_card_type",
+    "tuition_country",
+    "tuition_track",
+    "tuition_membership",
+    "tuition_selected_rate",
+    "tuition_associate_credits",
+    "tuition_bachelors_credits_min",
+    "tuition_bachelors_credits_max",
     "role",
 ]
 
 # Column display names (for better UX)
 COLUMN_DISPLAY_NAMES = {
+    "question": "Question",
     "input": "Question",
     "timestamp": "Timestamp",
     "country": "Country",
@@ -128,6 +141,15 @@ COLUMN_DISPLAY_NAMES = {
     "calendar_query_type": "Calendar Type",
     "calendar_pipeline_status": "Calendar Status",
     "calendar_card_title": "Calendar Card",
+    "is_tuition_question": "Tuition Question",
+    "tuition_card_type": "Tuition Card",
+    "tuition_country": "Tuition Country",
+    "tuition_track": "Tuition Track",
+    "tuition_membership": "Tuition Membership",
+    "tuition_selected_rate": "Tuition Rate",
+    "tuition_associate_credits": "Associate Credits",
+    "tuition_bachelors_credits_min": "Bachelor's Credits Min",
+    "tuition_bachelors_credits_max": "Bachelor's Credits Max",
     "role": "User Role",
 }
 
@@ -138,6 +160,8 @@ COLUMN_TYPES = {
     "is_suspicious": "bool",
     "is_not_answered": "bool",
     "is_calendar_question": "bool",
+    "is_tuition_question": "bool",
+    "tuition_needs_country_selection": "bool",
     "calendar_cache_hit": "bool",
     "latency": "float",
     "total_cost": "float",
@@ -146,7 +170,14 @@ COLUMN_TYPES = {
 
 # ============ Filter Options ============
 CLASSIFICATION_OPTIONS = ["All", "Existing Topic", "New Topic", "Uncategorized"]
-SOURCE_TYPE_OPTIONS = ["All", "RAG", "Calendar"]
+SOURCE_TYPE_OPTIONS = ["All", "RAG", "Calendar", "Tuition", "Tuition Journey"]
+SOURCE_TYPE_LABELS = {
+    "rag": "RAG",
+    "calendar": "Calendar",
+    "tuition": "Tuition",
+    "tuition_journey": "Tuition Journey",
+    "draft_edit": "Draft Edit",
+}
 SORT_OPTIONS = {
     "Timestamp (Newest First)": ("timestamp", False),
     "Timestamp (Oldest First)": ("timestamp", True),

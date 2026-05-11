@@ -61,6 +61,7 @@ def create_kpi_cards(kpis: Dict[str, any]):
     
     # Second row of KPIs
     col5, col6, col7, col8 = st.columns(4)
+    showed_last_updated = False
 
     with col5:
         if kpis['avg_similarity'] > 0:
@@ -87,8 +88,18 @@ def create_kpi_cards(kpis: Dict[str, any]):
                 value=last_updated_str,
                 help="Last time data was updated"
             )
+            showed_last_updated = True
 
     with col7:
+        tuition_q = kpis.get('tuition_questions', 0)
+        if tuition_q > 0:
+            st.metric(
+                label="💵 Tuition Questions",
+                value=f"{tuition_q:,}",
+                help="Questions handled by the tuition lookup or full-degree journey card"
+            )
+
+    with col8:
         na_count = kpis.get('not_answered_count', 0)
         na_rate = kpis.get('not_answered_rate')
         if na_count > 0:
@@ -99,9 +110,7 @@ def create_kpi_cards(kpis: Dict[str, any]):
                 delta_color="inverse",
                 help="Questions the chatbot could not answer (refusal / fallback responses)"
             )
-
-    with col8:
-        if kpis['last_updated']:
+        elif kpis['last_updated'] and not showed_last_updated:
             last_updated_str = kpis['last_updated'].strftime("%Y-%m-%d %H:%M")
             st.metric(
                 label="🕐 Last Updated",
@@ -869,4 +878,3 @@ def plot_activity_heatmap_with_insights(df: pd.DataFrame, key: str = "activity_h
     }
     
     return insights
-

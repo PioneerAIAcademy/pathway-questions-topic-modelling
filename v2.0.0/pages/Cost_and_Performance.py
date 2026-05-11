@@ -396,11 +396,11 @@ def main():
     with tab3:
         st.markdown("### 📊 Operational Overview")
 
-        # RAG vs Calendar comparison
+        # Source comparison
         has_source = 'source_type' in df.columns
         if has_source and (has_cost or has_latency):
-            st.markdown("#### 📅 RAG vs Calendar Pipeline Comparison")
-            with st.expander("ℹ️ What are RAG and Calendar?"):
+            st.markdown("#### 🧭 Answer Path Comparison")
+            with st.expander("ℹ️ What are these answer paths?"):
                 st.markdown("""
                 **RAG (Retrieval-Augmented Generation)** is the default path — the chatbot searches a knowledge base
                 and uses AI to write a custom answer. Most questions go through RAG.
@@ -408,55 +408,87 @@ def main():
                 **Calendar Pipeline** is a specialized path for date-related questions (e.g., "When does Block 3 start?").
                 Instead of searching the knowledge base, it looks up the academic calendar directly and returns
                 a structured calendar card. Calendar questions are typically slower (more steps) but more accurate for dates.
+
+                **Tuition** is the calculator path for rate and full-degree journey questions. It uses the tuition card
+                data instead of relying only on retrieved text.
                 """)
 
-            rag_df = df[df['source_type'] == 'rag']
-            cal_df = df[df['source_type'] == 'calendar']
+            label_map = {
+                'rag': 'RAG',
+                'calendar': 'Calendar',
+                'tuition': 'Tuition',
+                'tuition_journey': 'Tuition Journey',
+                'draft_edit': 'Draft Edit',
+            }
+            source_df = df.copy()
+            source_df['source_type'] = source_df['source_type'].fillna('rag').astype(str).str.lower()
+
+            summary_rows = []
+            for source_type, group in source_df.groupby('source_type'):
+                row = {
+                    'Answer Path': label_map.get(source_type, source_type.replace('_', ' ').title()),
+                    'Questions': len(group),
+                }
+                if has_latency:
+                    lat = group[group['latency'] > 0]['latency']
+                    row['Avg Latency (s)'] = round(lat.mean(), 2) if len(lat) > 0 else None
+                    row['P95 Latency (s)'] = round(lat.quantile(0.95), 2) if len(lat) > 0 else None
+                if has_cost:
+                    cost = group[group['total_cost'] > 0]['total_cost']
+                    row['Avg Cost ($)'] = round(cost.mean(), 6) if len(cost) > 0 else None
+                    row['Total Cost ($)'] = round(cost.sum(), 6) if len(cost) > 0 else 0
+                summary_rows.append(row)
+
+            source_summary = pd.DataFrame(summary_rows).sort_values('Questions', ascending=False)
 
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                st.metric("RAG Questions", f"{len(rag_df):,}")
-                st.metric("Calendar Questions", f"{len(cal_df):,}")
+                rag_count = int((source_df['source_type'] == 'rag').sum())
+                st.metric("RAG Questions", f"{rag_count:,}")
+                specialized = len(source_df) - rag_count
+                st.metric("Specialized Cards", f"{specialized:,}")
 
             with col2:
                 if has_latency:
+                    rag_df = source_df[source_df['source_type'] == 'rag']
+                    specialized_df = source_df[source_df['source_type'] != 'rag']
                     rag_lat = rag_df[rag_df['latency'] > 0]['latency']
-                    cal_lat = cal_df[cal_df['latency'] > 0]['latency']
+                    specialized_lat = specialized_df[specialized_df['latency'] > 0]['latency']
                     st.metric("RAG Avg Latency",
                               f"{rag_lat.mean():.2f}s" if len(rag_lat) > 0 else "N/A")
-                    st.metric("Calendar Avg Latency",
-                              f"{cal_lat.mean():.2f}s" if len(cal_lat) > 0 else "N/A")
+                    st.metric("Specialized Avg Latency",
+                              f"{specialized_lat.mean():.2f}s" if len(specialized_lat) > 0 else "N/A")
 
             with col3:
                 if has_cost:
+                    rag_df = source_df[source_df['source_type'] == 'rag']
+                    specialized_df = source_df[source_df['source_type'] != 'rag']
                     rag_cost = rag_df[rag_df['total_cost'] > 0]['total_cost']
-                    cal_cost = cal_df[cal_df['total_cost'] > 0]['total_cost']
+                    specialized_cost = specialized_df[specialized_df['total_cost'] > 0]['total_cost']
                     st.metric("RAG Avg Cost",
                               f"${rag_cost.mean():.6f}" if len(rag_cost) > 0 else "N/A")
-                    st.metric("Calendar Avg Cost",
-                              f"${cal_cost.mean():.6f}" if len(cal_cost) > 0 else "N/A")
+                    st.metric("Specialized Avg Cost",
+                              f"${specialized_cost.mean():.6f}" if len(specialized_cost) > 0 else "N/A")
+
+            st.dataframe(source_summary, width='stretch', hide_index=True)
 
             # Side-by-side latency distributions
-            if has_latency and len(cal_df) > 0:
+            if has_latency and source_df['source_type'].nunique() > 1:
                 fig = go.Figure()
-                rag_lat_vals = rag_df[rag_df['latency'] > 0]['latency']
-                cal_lat_vals = cal_df[cal_df['latency'] > 0]['latency']
-
-                if len(rag_lat_vals) > 0:
+                colors = [BYU_COLORS['primary'], BYU_COLORS['accent2'], BYU_COLORS['secondary'], BYU_COLORS['accent1']]
+                for idx, (source_type, group) in enumerate(source_df.groupby('source_type')):
+                    lat_vals = group[group['latency'] > 0]['latency']
+                    if len(lat_vals) == 0:
+                        continue
                     fig.add_trace(go.Histogram(
-                        x=rag_lat_vals, name='RAG',
-                        marker=dict(color=BYU_COLORS['primary']),
-                        opacity=0.7, nbinsx=30
-                    ))
-                if len(cal_lat_vals) > 0:
-                    fig.add_trace(go.Histogram(
-                        x=cal_lat_vals, name='Calendar',
-                        marker=dict(color=BYU_COLORS['accent2']),
+                        x=lat_vals,
+                        name=label_map.get(source_type, source_type.replace('_', ' ').title()),
+                        marker=dict(color=colors[idx % len(colors)]),
                         opacity=0.7, nbinsx=30
                     ))
                 fig.update_layout(
-                    title="Latency Distribution: RAG vs Calendar",
+                    title="Latency Distribution by Answer Path",
                     xaxis_title="Latency (seconds)",
                     yaxis_title="Count",
                     barmode='overlay', height=350,

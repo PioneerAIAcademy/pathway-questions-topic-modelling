@@ -69,8 +69,9 @@ def main():
     has_users = 'user_id' in df.columns and df['user_id'].notna().any()
     has_feedback = 'user_feedback' in df.columns and df['user_feedback'].notna().any()
     has_general_feedback = 'general_feedback' in raw_data and not raw_data['general_feedback'].empty
+    has_feature_events = 'feature_events' in raw_data and not raw_data['feature_events'].empty
 
-    if not has_sessions and not has_users and not has_feedback and not has_general_feedback:
+    if not has_sessions and not has_users and not has_feedback and not has_general_feedback and not has_feature_events:
         st.info("""
         ### ℹ️ No feedback data available yet
 
@@ -109,9 +110,10 @@ def main():
     st.markdown("---")
 
     # ── Tabs ──
-    tab1, tab2 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "👥 User & Session Analytics",
-        "📋 General Feedback"
+        "📋 General Feedback",
+        "🧩 Feature Events"
     ])
 
     # ── TAB 1: User & Session Analytics ──
@@ -303,6 +305,29 @@ def main():
                     showlegend=False
                 )
                 st.plotly_chart(fig, width='stretch', key="gf_over_time")
+
+    # ── TAB 3: Feature Events ──
+    with tab3:
+        if not has_feature_events:
+            st.info("""
+            No feature events yet.
+
+            Draft edits and similar non-chat product actions are stored here, separate
+            from normal user questions so they do not affect topic modelling.
+            """)
+        else:
+            st.markdown("### 🧩 Feature Events")
+            events_df = raw_data['feature_events'].copy()
+            st.metric("Total Events", f"{len(events_df):,}")
+
+            if 'name' in events_df.columns:
+                counts = events_df['name'].fillna('unknown').value_counts().reset_index()
+                counts.columns = ['Event Type', 'Count']
+                st.dataframe(counts, width='stretch', hide_index=True)
+
+            hidden_cols = ['id', 'metadata', 'tags']
+            display_cols = [c for c in events_df.columns if c not in hidden_cols]
+            st.dataframe(events_df[display_cols], width='stretch', hide_index=True)
 
 
 if __name__ == "__main__":

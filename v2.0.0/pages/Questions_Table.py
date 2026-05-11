@@ -11,7 +11,7 @@ import re
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import CLASSIFICATION_OPTIONS, PAGE_CONFIG, get_theme_css
+from config import CLASSIFICATION_OPTIONS, PAGE_CONFIG, SOURCE_TYPE_LABELS, get_theme_css
 from utils.data_loader import filter_dataframe, ensure_data_loaded
 
 
@@ -149,8 +149,8 @@ def main():
         key="search_query_filter"
     )
     
-    # Third row: Country and Similarity filters
-    col1, col2 = st.columns(2)
+    # Third row: Country, Source, and Similarity filters
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         if 'country' in df.columns:
@@ -166,6 +166,20 @@ def main():
             country_filter = None
     
     with col2:
+        if 'source_type' in df.columns:
+            source_values = sorted(df['source_type'].fillna('rag').astype(str).str.lower().unique().tolist())
+            selected_source_labels = st.multiselect(
+                "🧭 Source",
+                source_values,
+                format_func=lambda value: SOURCE_TYPE_LABELS.get(value, value.replace('_', ' ').title()),
+                key="source_type_filter",
+                help="Filter by the path that answered the question"
+            )
+            source_filter = selected_source_labels if selected_source_labels else None
+        else:
+            source_filter = None
+
+    with col3:
         if 'similarity_score' in df.columns:
             min_similarity = st.slider(
                 "📊 Minimum Similarity Score",
@@ -198,7 +212,7 @@ def main():
     # Clear filters button
     if st.button("🔄 Clear All Filters", width='content'):
         # Clear all filter widget states
-        for key in ['classification_filter', 'search_query_filter', 'countries_filter', 'similarity_filter', 'date_range_filter', 'unanswered_filter']:
+        for key in ['classification_filter', 'search_query_filter', 'countries_filter', 'source_type_filter', 'similarity_filter', 'date_range_filter', 'unanswered_filter']:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
@@ -211,6 +225,7 @@ def main():
         classification=classification,
         date_range=date_filter,
         countries=country_filter,
+        source_types=source_filter,
         search_query=search_query if search_query else None,
         min_similarity=min_similarity
     )

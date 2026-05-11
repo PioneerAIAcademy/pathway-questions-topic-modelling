@@ -73,6 +73,8 @@ Edit `config.py` for:
 - `similar_questions_*.parquet` - Questions matched to existing topics
 - `new_topics_*.parquet` - Discovered topics from clustering
 - `topic_distribution_*.parquet` - Topic statistics
+- `general_feedback_*.parquet` - General user feedback submissions
+- `feature_events_*.parquet` - Non-chat feature actions such as draft edits
 
 Dashboard automatically loads the most recent files with timestamp suffixes.
 
@@ -119,4 +121,3 @@ Dashboard automatically loads the most recent files with timestamp suffixes.
 - Theme styling in `config.py` (supports dark/light modes)
 
 See main project README for full documentation and notebook integration details.
-

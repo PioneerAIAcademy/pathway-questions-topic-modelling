@@ -183,16 +183,19 @@ def merge_data_for_dashboard(data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
             'new': 'New Topic',
             'uncategorized': 'Uncategorized'
         }
-        df['classification'] = df['classification'].map(classification_map)
+        if 'classification' in df.columns:
+            mapped = df['classification'].map(classification_map)
+            df['classification'] = mapped.fillna(df['classification'])
         
         # For consistency, rename topic_name to matched_topic for existing topics
-        df['matched_topic'] = df['topic_name']
+        if 'topic_name' in df.columns:
+            df['matched_topic'] = df['topic_name']
         # Remove duplicate topic_name column
         if 'topic_name' in df.columns:
             df = df.drop(columns=['topic_name'])
         
         # Add similarity score from similar_questions if available
-        if 'similar_questions' in data:
+        if 'similar_questions' in data and {'question', 'similarity_score'}.issubset(data['similar_questions'].columns):
             similar_df = data['similar_questions'][['question', 'similarity_score']].copy()
             # Keep only the highest similarity score for each question (in case of duplicates)
             similar_df = similar_df.sort_values('similarity_score', ascending=False).drop_duplicates('question', keep='first')
@@ -212,6 +215,19 @@ def merge_data_for_dashboard(data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         if 'timestamp' in df.columns:
             # Use format='ISO8601' to handle various ISO 8601 formats (with/without microseconds)
             df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', errors='coerce')
+
+        # Source type existed before tuition; keep old files working and normalize blanks.
+        if 'source_type' not in df.columns:
+            df['source_type'] = 'rag'
+        else:
+            df['source_type'] = (
+                df['source_type']
+                .fillna('rag')
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .replace({'': 'rag', 'tuition journey': 'tuition_journey', 'draft-edit': 'draft_edit'})
+            )
         
         # Final deduplication check - remove any duplicates that may have been introduced by merging
         # Use same logic as notebook: same timestamp AND same question
@@ -267,9 +283,9 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
     """
     kpis = {
         'total_questions': len(merged_df),
-        'matched_existing': len(merged_df[merged_df['classification'] == 'Existing Topic']),
+        'matched_existing': len(merged_df[merged_df['classification'] == 'Existing Topic']) if 'classification' in merged_df.columns else 0,
         'new_topics_discovered': 0,
-        'questions_in_new_topics': len(merged_df[merged_df['classification'] == 'New Topic']),
+        'questions_in_new_topics': len(merged_df[merged_df['classification'] == 'New Topic']) if 'classification' in merged_df.columns else 0,
         'countries': merged_df['country'].nunique() if 'country' in merged_df.columns else 0,
         'avg_similarity': merged_df['similarity_score'].mean() if 'similarity_score' in merged_df.columns else 0,
         'last_updated': None,
@@ -283,9 +299,12 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
         # Calendar & not-answered KPIs
         'calendar_questions': int(merged_df['is_calendar_question'].sum()) if 'is_calendar_question' in merged_df.columns else 0,
         'calendar_success_rate': None,
+        'tuition_questions': 0,
         'not_answered_count': int(merged_df['is_not_answered'].sum()) if 'is_not_answered' in merged_df.columns else 0,
         'not_answered_rate': None,
         'rag_questions': 0,
+        'source_counts': {},
+        'feature_events': len(data.get('feature_events', [])) if isinstance(data.get('feature_events'), pd.DataFrame) else 0,
     }
 
     # Calendar success rate
@@ -299,9 +318,16 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
     if kpis['total_questions'] > 0 and kpis['not_answered_count'] > 0:
         kpis['not_answered_rate'] = round(kpis['not_answered_count'] / kpis['total_questions'] * 100, 1)
 
-    # RAG vs Calendar split
+    # Source split
     if 'source_type' in merged_df.columns:
-        kpis['rag_questions'] = int((merged_df['source_type'] == 'rag').sum())
+        source_series = merged_df['source_type'].fillna('rag').astype(str).str.lower()
+        kpis['source_counts'] = source_series.value_counts().to_dict()
+        kpis['rag_questions'] = int((source_series == 'rag').sum())
+        kpis['tuition_questions'] = int(source_series.isin(['tuition', 'tuition_journey']).sum())
+
+    if 'is_tuition_question' in merged_df.columns:
+        tuition_flag_count = int(merged_df['is_tuition_question'].fillna(False).sum())
+        kpis['tuition_questions'] = max(kpis['tuition_questions'], tuition_flag_count)
     
     # Count unique new topics
     # new_topics DataFrame has columns: topic_name, representative_question, question_count
@@ -311,7 +337,7 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
     
     # Alternative: Count unique topic names in merged_df for new topics
     if kpis['new_topics_discovered'] == 0:
-        new_topic_df = merged_df[merged_df['classification'] == 'New Topic']
+        new_topic_df = merged_df[merged_df['classification'] == 'New Topic'] if 'classification' in merged_df.columns else pd.DataFrame()
         if 'matched_topic' in new_topic_df.columns:
             kpis['new_topics_discovered'] = new_topic_df['matched_topic'].nunique()
     
@@ -329,7 +355,8 @@ def filter_dataframe(
     date_range: Optional[Tuple[datetime, datetime]] = None,
     countries: Optional[List[str]] = None,
     search_query: Optional[str] = None,
-    min_similarity: Optional[float] = None
+    min_similarity: Optional[float] = None,
+    source_types: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """
     Apply filters to the dataframe.
@@ -338,7 +365,7 @@ def filter_dataframe(
     filtered_df = df.copy()
     
     # Classification filter
-    if classification != "All":
+    if classification != "All" and 'classification' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['classification'] == classification]
     
     # Date range filter
@@ -360,6 +387,12 @@ def filter_dataframe(
     # Country filter
     if countries and 'country' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['country'].isin(countries)]
+
+    # Source type filter
+    if source_types and 'source_type' in filtered_df.columns:
+        filtered_df = filtered_df[
+            filtered_df['source_type'].fillna('rag').astype(str).str.lower().isin(source_types)
+        ]
     
     # Search filter (searches in question text)
     if search_query:
@@ -427,7 +460,7 @@ def get_column_config(columns: List[str]) -> Dict[str, any]:
                     label="Similarity Score",
                     format="%.3f"
                 )
-            elif col == "input":
+            elif col in {"input", "question"}:
                 config[col] = st.column_config.TextColumn(
                     label="Question",
                     width="large"
