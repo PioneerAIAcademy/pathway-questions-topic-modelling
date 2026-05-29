@@ -61,11 +61,15 @@ def main():
 
     with col1:
         if has_cost:
-            total_cost = df['total_cost'].sum()
+            # Sum only real costs (> 0). Traces fetched without the Langfuse
+            # 'metrics' field group carry total_cost = -1.0 (a sentinel, not a
+            # cost); summing those raw drove this KPI negative. Every other cost
+            # metric on this page already filters > 0 — this one now matches.
+            total_cost = df[df['total_cost'] > 0]['total_cost'].sum()
             st.metric(
                 label="💰 Total Cost",
                 value=f"${total_cost:.4f}",
-                help="Total cost across all traces"
+                help="Total cost across all traces (real costs only; -1 sentinels excluded)"
             )
 
     with col2:

@@ -292,7 +292,7 @@ def calculate_kpis(merged_df: pd.DataFrame, data: Dict[str, pd.DataFrame]) -> Di
         # Cost & performance
         'avg_latency': merged_df['latency'].mean() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
         'median_latency': merged_df['latency'].median() if 'latency' in merged_df.columns and merged_df['latency'].notna().any() else None,
-        'total_cost': merged_df['total_cost'].sum() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
+        'total_cost': merged_df.loc[merged_df['total_cost'] > 0, 'total_cost'].sum() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
         'avg_cost_per_question': merged_df['total_cost'].mean() if 'total_cost' in merged_df.columns and merged_df['total_cost'].notna().any() else None,
         'unique_users': merged_df['user_id'].nunique() if 'user_id' in merged_df.columns else 0,
         'unique_sessions': merged_df['session_id'].nunique() if 'session_id' in merged_df.columns else 0,
