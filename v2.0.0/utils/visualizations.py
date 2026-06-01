@@ -110,13 +110,15 @@ def create_kpi_cards(kpis: Dict[str, any]):
                 delta_color="inverse",
                 help="Questions the chatbot could not answer (refusal / fallback responses)"
             )
-        elif kpis['last_updated'] and not showed_last_updated:
-            last_updated_str = kpis['last_updated'].strftime("%Y-%m-%d %H:%M")
-            st.metric(
-                label="🕐 Last Updated",
-                value=last_updated_str,
-                help="Last time data was updated"
-            )
+
+    # Last Updated only takes a KPI slot (col6) when one is free; with real data
+    # (which has calendar + tuition + not-answered counts) every slot is taken,
+    # so it was silently dropped after the Tuition KPI was added (commit 2f26b81).
+    # Guarantee it below the grid as a caption. The `not showed_last_updated`
+    # guard prevents a double-display when col6 already showed the metric.
+    if kpis['last_updated'] and not showed_last_updated:
+        last_updated_str = kpis['last_updated'].strftime("%Y-%m-%d %H:%M")
+        st.caption(f"🕐 Last updated: {last_updated_str}")
 
 
 def plot_classification_distribution(df: pd.DataFrame):

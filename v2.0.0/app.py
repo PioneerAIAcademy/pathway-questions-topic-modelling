@@ -98,9 +98,9 @@ def main():
         
         # Success message
         file_info = get_latest_file_info()
-        if file_info and 'timestamp' in file_info:
+        if file_info and file_info.get('last_updated'):
             st.success(f"✅ **Data loaded successfully!** Processing {kpis['total_questions']:,} questions from S3.")
-            st.caption(f"📅 Data timestamp: {file_info['timestamp']}")
+            st.caption(f"📅 Data timestamp: {file_info['last_updated'].strftime('%Y-%m-%d %H:%M')}")
         else:
             st.success(f"✅ **Data loaded successfully!** Processing {kpis['total_questions']:,} questions from S3.")
         
